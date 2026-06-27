@@ -7,6 +7,7 @@ export default function PWABanner() {
   const [showBanner, setShowBanner] = useState(false);
   const [deviceType, setDeviceType] = useState('desktop'); // ios, android, desktop
   const [isInAppBrowser, setIsInAppBrowser] = useState(false);
+  const [showFallbackModal, setShowFallbackModal] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState(null);
 
   useEffect(() => {
@@ -67,7 +68,7 @@ export default function PWABanner() {
       }
       window.deferredPrompt = null;
     } else {
-      alert("يرجى استخدام خيارات المتصفح (إضافة إلى الشاشة الرئيسية) لتثبيته على جهازك.");
+      setShowFallbackModal(true);
     }
   };
 
@@ -122,6 +123,24 @@ export default function PWABanner() {
           </>
         )}
       </motion.div>
+
+      {/* النافذة التنبيهية الخاصة بالتثبيت اليدوي (Fallback Modal) */}
+      {showFallbackModal && (
+        <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 z-[60]">
+          <div className="bg-white p-6 rounded-3xl max-w-sm text-center shadow-2xl border border-white/20">
+            <h3 className="text-xl font-black mb-3 text-slate-800">تثبيت التطبيق</h3>
+            <p className="text-slate-500 mb-6 font-semibold text-sm leading-relaxed">
+              يرجى استخدام خيارات المتصفح (إضافة إلى الشاشة الرئيسية) لتثبيته على جهازك.
+            </p>
+            <button 
+              onClick={() => setShowFallbackModal(false)}
+              className="bg-emerald-500 hover:bg-emerald-600 text-white font-black px-8 py-3 rounded-xl transition-all w-full shadow-lg shadow-emerald-500/30"
+            >
+              حسناً، فهمت
+            </button>
+          </div>
+        </div>
+      )}
     </AnimatePresence>
   );
 }
