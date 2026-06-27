@@ -38,15 +38,7 @@ export default function PWABanner() {
     const inApp = /Instagram|WhatsApp|FBAN|FBAV/i.test(ua);
     setIsInAppBrowser(inApp);
 
-    // Save beforeinstallprompt
-    const handleBeforeInstallPrompt = (e) => {
-      e.preventDefault();
-      setDeferredPrompt(e);
-      window.deferredPrompt = e; // Global fallback
-    };
-
-    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-
+    // Global fallback is handled in index.html
     // Listen to app installed
     const handleAppInstalled = () => {
       setIsStandalone(true);
@@ -56,7 +48,6 @@ export default function PWABanner() {
     window.addEventListener('appinstalled', handleAppInstalled);
 
     return () => {
-      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
       window.removeEventListener('appinstalled', handleAppInstalled);
     };
   }, []);
@@ -67,17 +58,16 @@ export default function PWABanner() {
   };
 
   const handleInstallClick = async () => {
-    const promptEvent = deferredPrompt || window.deferredPrompt;
+    const promptEvent = window.deferredPrompt;
     if (promptEvent) {
       promptEvent.prompt();
       const { outcome } = await promptEvent.userChoice;
       if (outcome === 'accepted') {
         setShowBanner(false);
       }
-      setDeferredPrompt(null);
       window.deferredPrompt = null;
     } else {
-      alert("يرجى استخدام خيارات المتصفح 'إضافة إلى الشاشة الرئيسية' لتثبيته على جهازك.");
+      alert("يرجى استخدام خيارات المتصفح (إضافة إلى الشاشة الرئيسية) لتثبيته على جهازك.");
     }
   };
 
