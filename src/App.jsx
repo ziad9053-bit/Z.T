@@ -1,122 +1,156 @@
-import React, { useState } from 'react';
-import { motion } from 'framer-motion'; // للموشن والتحريك السلس
-import { MessageCircle, Send, History, Grid, Settings2, Sparkles } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { MessageCircle, Send, Settings2, X, Save, Sparkles, RefreshCcw } from 'lucide-react';
 
 export default function App() {
   const [phone, setPhone] = useState('');
   const [message, setMessage] = useState('');
-
-  const quickMessages = [
+  const [showSettings, setShowSettings] = useState(false);
+  const [countryCode, setCountryCode] = useState('966');
+  
+  // مصفوفة الرسائل قابلة للتعديل (نحملها من الذاكرة المحلية)
+  const [customMessages, setCustomMessages] = useState([
     { id: 1, label: 'تحية', text: 'السلام عليكم ورحمة الله وبركاته' },
     { id: 2, label: 'استفسار', text: 'هل هذا المنتج لا يزال متوفراً؟' },
-    { id: 3, label: 'موقع', text: 'ممكن ترسل لي موقع المحل فضلاً؟' },
-    { id: 4, label: 'شكر', text: 'شكراً جزيلاً، سعدت بالتعامل معكم' },
-  ];
+  ]);
 
-  const handleSend = () => {
+  // حفظ واسترجاع الإعدادات
+  useEffect(() => {
+    const saved = localStorage.getItem('wa_matrix_settings');
+    if (saved) setCustomMessages(JSON.parse(saved));
+  }, []);
+
+  const saveSettings = (newMessages) => {
+    setCustomMessages(newMessages);
+    localStorage.setItem('wa_matrix_settings', JSON.stringify(newMessages));
+    setShowSettings(false);
+  };
+
+  const cleanAndSend = () => {
     if (!phone) return;
-    const url = `https://wa.me/966${phone.replace(/^0+/, '')}${message ? '?text=' + encodeURIComponent(message) : ''}`;
+    
+    // دالة تنظيف الرقم الذكية
+    let finalPhone = phone.trim();
+    // حذف أي علامة + أو أصفار دولية
+    finalPhone = finalPhone.replace(/^(\+00|\+0|00|\+)/, '');
+    
+    // إذا كان الرقم يبدأ برمز الدولة المختار، قم بحذفه
+    if (finalPhone.startsWith(countryCode)) {
+      finalPhone = finalPhone.substring(countryCode.length);
+    }
+    
+    // حذف الصفر المحلي في البداية إن وجد (مثل 055...)
+    finalPhone = finalPhone.replace(/^0+/, '');
+
+    const url = `https://wa.me/${countryCode}${finalPhone}${message ? '?text=' + encodeURIComponent(message) : ''}`;
     window.open(url, '_blank');
   };
 
   return (
-    <div className="min-h-screen bg-[#0f172a] text-white font-cairo flex items-center justify-center p-4 overflow-hidden relative" dir="rtl">
+    <div className="min-h-screen bg-[#0a0a0a] text-white font-cairo flex items-center justify-center p-4 relative overflow-hidden" dir="rtl">
       
-      {/* خلفية فنية (Mesh Gradients) */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-emerald-500/20 blur-[120px] rounded-full" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-blue-500/20 blur-[120px] rounded-full" />
-
-      <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="w-full max-w-lg bg-white/5 backdrop-blur-xl border border-white/10 p-8 rounded-[2.5rem] shadow-2xl relative z-10"
-      >
-        {/* الهيدر */}
-        <div className="flex justify-between items-center mb-10">
-          <div>
-            <h1 className="text-3xl font-black bg-gradient-to-l from-emerald-400 to-blue-400 bg-clip-text text-transparent">
-              ماتريكس واتساب
-            </h1>
-            <p className="text-white/40 text-sm mt-1">تواصل بذكاء، وبدون قيود</p>
-          </div>
-          <div className="p-3 bg-emerald-500/20 rounded-2xl border border-emerald-500/30">
-            <Sparkles className="text-emerald-400" size={24} />
-          </div>
+      {/* الواجهة الرئيسية */}
+      <motion.div className="w-full max-w-md bg-zinc-900 border border-white/5 p-8 rounded-[3rem] shadow-2xl relative z-10">
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-2xl font-black text-emerald-400">ماتريكس الذكي</h1>
+          <button onClick={() => setShowSettings(true)} className="p-3 bg-white/5 hover:bg-white/10 rounded-2xl transition-all">
+            <Settings2 size={20} className="text-white/60" />
+          </button>
         </div>
 
-        {/* حقل الرقم */}
         <div className="space-y-6">
-          <div className="relative group">
-            <label className="text-xs font-bold text-white/30 mr-4 mb-2 block uppercase tracking-widest">رقم الجوال (السعودية)</label>
-            <div className="flex items-center bg-white/5 border border-white/10 rounded-2xl p-2 focus-within:border-emerald-500/50 transition-all">
-              <span className="px-4 text-emerald-400 font-black border-l border-white/10">+966</span>
+          <div className="bg-black/50 p-4 rounded-3xl border border-white/5">
+            <label className="text-[10px] font-bold text-white/30 mr-2 mb-2 block uppercase">الرقم الذكي</label>
+            <div className="flex items-center gap-3">
+              <span className="text-emerald-500 font-black">+{countryCode}</span>
               <input 
                 type="tel" 
-                placeholder="5xxxxxxxx"
+                placeholder="أدخل الرقم هنا..."
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="bg-transparent border-none focus:ring-0 w-full p-3 font-black text-xl tracking-widest placeholder:text-white/10"
+                className="bg-transparent border-none focus:ring-0 w-full font-black text-xl placeholder:text-white/5"
               />
             </div>
           </div>
 
-          {/* مصفوفة الرسائل الجاهزة */}
-          <div>
-            <label className="text-xs font-bold text-white/30 mr-4 mb-4 block uppercase tracking-widest">مصفوفة الرسائل السريعة</label>
-            <div className="grid grid-cols-2 gap-3">
-              {quickMessages.map((msg) => (
-                <motion.button
-                  key={msg.id}
-                  whileHover={{ scale: 1.02, backgroundColor: 'rgba(255,255,255,0.1)' }}
-                  whileTap={{ scale: 0.98 }}
-                  onClick={() => setMessage(msg.text)}
-                  className={`p-4 rounded-2xl border text-right transition-all ${
-                    message === msg.text ? 'border-emerald-500 bg-emerald-500/10' : 'border-white/5 bg-white/5'
-                  }`}
-                >
-                  <p className="text-xs font-bold text-emerald-400 mb-1">{msg.label}</p>
-                  <p className="text-[10px] text-white/60 truncate">{msg.text}</p>
-                </motion.button>
-              ))}
-            </div>
+          {/* مصفوفة الرسائل من الإعدادات */}
+          <div className="grid grid-cols-2 gap-3">
+            {customMessages.map((msg) => (
+              <button
+                key={msg.id}
+                onClick={() => setMessage(msg.text)}
+                className={`p-4 rounded-2xl border text-right transition-all text-xs ${
+                  message === msg.text ? 'border-emerald-500 bg-emerald-500/10' : 'border-white/5 bg-black/20'
+                }`}
+              >
+                <p className="font-bold text-emerald-400 mb-1">{msg.label}</p>
+                <p className="text-white/40 truncate">{msg.text}</p>
+              </button>
+            ))}
           </div>
 
-          {/* حقل النص المخصص */}
-          <div className="relative">
-             <textarea 
-              rows={3}
-              placeholder="أو اكتب رسالة مخصصة هنا..."
-              value={message}
-              onChange={(e) => setMessage(e.target.value)}
-              className="w-full bg-white/5 border border-white/10 rounded-2xl p-4 focus:border-blue-500/50 focus:outline-none transition-all resize-none text-sm placeholder:text-white/10"
-            />
-          </div>
-
-          {/* الزر الرئيسي */}
-          <motion.button 
-            whileHover={{ scale: 1.02, shadow: "0 0 20px rgba(16, 185, 129, 0.4)" }}
-            whileTap={{ scale: 0.98 }}
-            onClick={handleSend}
-            className="w-full bg-gradient-to-l from-emerald-500 to-emerald-600 text-[#0f172a] font-black text-xl py-5 rounded-[1.5rem] flex items-center justify-center gap-3 shadow-xl"
+          <button 
+            onClick={cleanAndSend}
+            className="w-full bg-emerald-500 hover:bg-emerald-400 text-black font-black text-xl py-5 rounded-[2rem] flex items-center justify-center gap-3 transition-all"
           >
-            <Send size={24} />
-            إطلاق المحادثة
-          </motion.button>
-        </div>
-
-        {/* الفوتر - الأرقام الأخيرة */}
-        <div className="mt-10 pt-6 border-t border-white/5 flex justify-between items-center text-white/20">
-          <div className="flex gap-2">
-            <History size={16} />
-            <span className="text-[10px] font-bold">الأرقام الأخيرة</span>
-          </div>
-          <div className="flex gap-2">
-            <div className="w-6 h-6 rounded-full bg-white/5 border border-white/10" />
-            <div className="w-6 h-6 rounded-full bg-white/5 border border-white/10" />
-            <div className="w-6 h-6 rounded-full bg-white/5 border border-white/10" />
-          </div>
+            <Send size={24} /> مراسلة فورية
+          </button>
         </div>
       </motion.div>
+
+      {/* مودال الإعدادات (Settings Overlay) */}
+      <AnimatePresence>
+        {showSettings && (
+          <motion.div 
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/90 backdrop-blur-sm flex items-center justify-center p-4"
+          >
+            <motion.div 
+              initial={{ scale: 0.9, y: 20 }} animate={{ scale: 1, y: 0 }}
+              className="w-full max-w-md bg-zinc-900 border border-white/10 p-6 rounded-[2.5rem]"
+            >
+              <div className="flex justify-between items-center mb-6">
+                <h2 className="text-xl font-bold flex items-center gap-2"><Settings2 size={20}/> تخصيص المصفوفة</h2>
+                <button onClick={() => setShowSettings(false)}><X size={24}/></button>
+              </div>
+
+              <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+                {customMessages.map((msg, index) => (
+                  <div key={msg.id} className="p-4 bg-black/40 rounded-2xl border border-white/5 space-y-3">
+                    <input 
+                      placeholder="عنوان الصف (مثلاً: تحية)"
+                      value={msg.label}
+                      onChange={(e) => {
+                        const newMsgs = [...customMessages];
+                        newMsgs[index].label = e.target.value;
+                        setCustomMessages(newMsgs);
+                      }}
+                      className="w-full bg-white/5 border-none rounded-xl p-2 text-sm font-bold text-emerald-400"
+                    />
+                    <textarea 
+                      placeholder="نص الرسالة..."
+                      value={msg.text}
+                      onChange={(e) => {
+                        const newMsgs = [...customMessages];
+                        newMsgs[index].text = e.target.value;
+                        setCustomMessages(newMsgs);
+                      }}
+                      className="w-full bg-white/5 border-none rounded-xl p-2 text-xs text-white/60 resize-none"
+                    />
+                  </div>
+                ))}
+              </div>
+
+              <button 
+                onClick={() => saveSettings(customMessages)}
+                className="w-full mt-6 bg-white text-black font-bold py-4 rounded-2xl flex items-center justify-center gap-2"
+              >
+                <Save size={20} /> حفظ التغييرات
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
