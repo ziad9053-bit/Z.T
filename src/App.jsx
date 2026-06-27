@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MessageCircle, Send, Settings2, X, Save, Sparkles, RefreshCcw } from 'lucide-react';
+import PWABanner from './components/PWABanner';
 
 export default function App() {
   const [phone, setPhone] = useState('');
@@ -48,6 +49,7 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white font-cairo flex items-center justify-center p-4 relative overflow-hidden" dir="rtl">
+      <PWABanner />
       
       {/* الواجهة الرئيسية */}
       <motion.div className="w-full max-w-md bg-zinc-900 border border-white/5 p-8 rounded-[3rem] shadow-2xl relative z-10">
